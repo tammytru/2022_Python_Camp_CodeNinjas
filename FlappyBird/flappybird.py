@@ -28,6 +28,22 @@ PIPE_GAP = 150
 PIPE_FREQUENCY = 1500 #milliseconds
 LAST_PIPE = pygame.time.get_ticks() - PIPE_FREQUENCY
 
+def reset():
+    pipe_group.empty()
+    bird.rect.x = 100
+    bird.rect.y = int(WINDOW_HEIGHT/2)
+    SCORE = 0
+    return SCORE
+
+# ===== SCORING SYSTEM ====== #
+FONT = pygame.font.Font(None, 80)
+SCORE = 0
+PASS_PIPE = False
+
+def display_score(text, font, color, x, y):
+    img = font.render(text, True, color)
+    GAME_WINDOW.blit(img, (x, y))
+
 # ========== BIRD =========== #
 class Bird(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -98,7 +114,11 @@ while game_running:
                 FLYING = True
             if event.key == K_ESCAPE:
                 game_running = False
-    
+            if GAME_OVER:
+                if event.key == K_r:
+                    GAME_OVER = False
+                    SCORE = reset()
+
     #if bird touch pipe
     if pygame.sprite.groupcollide(bird_group, pipe_group, False, False) or bird.rect.top < 0:
         GAME_OVER = True
@@ -130,12 +150,26 @@ while game_running:
     if bird.rect.bottom > 768:
         GAME_OVER = True
         FLYING = False
+
+    #check score
+    if len(pipe_group) > 0:
+        if bird_group.sprites()[0].rect.left > pipe_group.sprites()[0].rect.left\
+            and bird_group.sprites()[0].rect.right < pipe_group.sprites()[0].rect.right\
+            and PASS_PIPE == False:
+            PASS_PIPE = True
+        if PASS_PIPE:
+            if bird_group.sprites()[0].rect.left > pipe_group.sprites()[0].rect.right:
+                SCORE += 1
+                PASS_PIPE = False
+
     # -------- RENDER -------- #
     GAME_WINDOW.blit(background_img, (0,0)) 
     GAME_WINDOW.blit(ground_img, (GROUND_SCROLL, 768))
 
     bird_group.draw(GAME_WINDOW)
     pipe_group.draw(GAME_WINDOW)
+
+    display_score(str(SCORE), FONT, WHITE, int(WINDOW_WIDTH/2), 20)
 
     pygame.display.flip()
 pygame.quit()
